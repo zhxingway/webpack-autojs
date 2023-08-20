@@ -1,0 +1,13 @@
+{
+    "name": "sdk",
+    "main": "lib.js",
+    "ignore": [
+        "build"
+    ],
+    "launchConfig": {
+        "hideLogs": true
+    },
+    "packageName": "com.example.sdk",
+    "versionName": "1.5.0",
+    "versionCode": 5
+}

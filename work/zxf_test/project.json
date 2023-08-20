@@ -1,0 +1,13 @@
+{
+    "name": "zxf_test",
+    "main": "zxf_test.js",
+    "ignore": [
+        "build"
+    ],
+    "launchConfig": {
+        "hideLogs": true
+    },
+    "packageName": "com.example.zxf_test",
+    "versionName": "1.0.0",
+    "versionCode": 1
+}
