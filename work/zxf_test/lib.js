@@ -17,7 +17,7 @@ function main() {
 
 // 启动应用：传入参数依次为：主函数，要启动的 App 名称，当前应用描述，是否语音播报执行状态。
 start_app(main, '网易云音乐', '播放日推', true)
-*/ 
+*/
 
 operation_app = ''
 window = {
@@ -505,7 +505,7 @@ function start_app(callback, op_app, this_app, use_tts, close_app) {
     }
     key_event()
     sleep(800)
-    if (close_app == true) clear_recent(op_app)
+    //if (close_app == true) clear_recent(op_app)
     log('Launch', op_app)
     launchApp(op_app);
     start_tip(this_app);
@@ -627,6 +627,45 @@ function wait_for(_text) {
 
         }
         sleep(800)
+    }
+}
+
+/**
+ * 等待节点出现并点击坐标
+ * @param {*} wait_time 每次检查等待时间
+ * @param {*} wait_counts 总检查次数
+ */
+function wait_and_click_points(wait_id, wait_desc, wait_class, wait_text, x, y, wait_time, wait_counts) {
+
+    let bSuccess = false;
+    let ele = undefined;
+    for (let i = 0; i < wait_counts; i++) {
+        sleep(wait_time);
+
+        if (wait_id !== undefined) {
+            ele = id(wait_id);
+        }
+
+        if (wait_desc !== undefined) {
+            if (ele === undefined) {
+                ele = id(wait_desc);
+            }
+            else {
+                ele = ele.desc(wait_desc);
+            }
+        }
+        
+        if (id("com.kingpoint.gmcchh:id/txTitle").text("签到有礼").exists()) {
+            click(705, 1096);
+            bSuccess = true;
+            break;
+        }
+    }
+    if (bSuccess) {
+        toast("签到成功。");
+    }
+    else {
+        log("error。签到失败。");
     }
 }
 

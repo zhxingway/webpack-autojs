@@ -1,4 +1,7 @@
 //"ui";
+auto();
+auto.waitFor();
+
 let { start_app, click_item, set_volume, wait_befor_click } = require('./lib.js');
 
 // 编写主函数：程序启动后执行的逻辑代码。
@@ -8,7 +11,25 @@ let { start_app, click_item, set_volume, wait_befor_click } = require('./lib.js'
 //start_app(main, '中国移动广东', '移动签到', true);
 launchApp('中国移动广东');
 
-sleep(3000);
+sleep(10000);
 
-//允许启动
-id("button1").findOne().click();
+id("com.kingpoint.gmcchh:id/image_first").desc("签到有礼").click();
+
+sleep(5000);
+
+let bSuccess = false;
+for (let i = 0; i < 3; i++) {
+    sleep(2000);
+    if (id("com.kingpoint.gmcchh:id/txTitle").text("签到有礼").exists()) {        
+        click(705, 1096);        
+        bSuccess = true;
+        break;
+    }
+}
+if(bSuccess){
+    toast("签到成功。");
+}
+else
+{
+    log("error。签到失败。");
+}
