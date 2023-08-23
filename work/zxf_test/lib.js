@@ -410,12 +410,13 @@ function random_sleep(tip_message) {
 /**
  * 按键监听，自动执行，按下音量加结束进程
  */
-function key_event() {
+function addKeyEvent() {
     threads.start(function () {
         events.observeKey();
         events.on("key_down", function (keyCode, events) {
             if (keyCode == keys.volume_up) {
-                toastLog('运行结束')
+                toast('运行结束');
+                console.info('运行结束');
                 exit();
             }
         });
@@ -491,30 +492,34 @@ function clear_recent(operation_app) {
 }
 /**
  * 脚本运行的前置+后置自动化操作，包括屏幕解锁，自动按键监听，移出最近任务，启动 App，执行脚本，结束进程等。
+ * @param {*} appName 需要启动的 App，如：网易云音乐
+ * @param {*} scriptName 当前脚本描述，如：播放日推
  * @param {*} callback 启动 App 后需要执行的内容
- * @param {*} op_app 需要启动的 App，如：网易云音乐
- * @param {*} this_app 当前脚本描述，如：播放日推
- * @param {*} use_tts 是否使用结束语音，传入 true 时，会在运行结束前给出语音提示
+ * @param {*} useTTS 是否使用结束语音，传入 true 时，会在运行结束前给出语音提示
+ * @param {*} closeApp 是否关闭APP
  */
-function start_app(callback, op_app, this_app, use_tts, close_app) {
-    if (close_app == undefined) close_app = false
-    this_app = this_app != undefined ? this_app : op_app
-    operation_app = op_app + '\n'
-    while (!device.isScreenOn()) {
-        unlock();
-    }
-    key_event()
-    sleep(800)
-    //if (close_app == true) clear_recent(op_app)
-    log('Launch', op_app)
-    launchApp(op_app);
-    start_tip(this_app);
-    sleep(1000)
-    if (op_app) {
-        callback();
-        end_tip(this_app);
-        if (use_tts) tts_report(this_app + '成功')
-        exit()
+function startApp(appName, scriptName, callback, useTTS, closeApp) {
+    if (closeApp == undefined) closeApp = false
+    //if (closeApp == true) clear_recent(appName)
+
+    scriptName = scriptName != undefined ? scriptName : appName
+    if (appName) {
+        while (!device.isScreenOn()) {
+            unlock();
+        }
+
+        addKeyEvent();
+        sleep(800)
+
+        launchApp(appName);
+        sleep(10000)
+
+        if (useTTS) {
+            tts_report(scriptName + '成功')
+        }
+
+        toast(scriptName + '成功');
+        console.info(scriptName + '成功');
     }
 }
 
@@ -631,42 +636,123 @@ function wait_for(_text) {
 }
 
 /**
- * 等待节点出现并点击坐标
- * @param {*} wait_time 每次检查等待时间
- * @param {*} wait_counts 总检查次数
+ * 点击结点
+ * @param {*} waitID id
+ * @param {*} waitDesc desc
+ * @param {*} waitClass class
+ * @param {*} waitText text
+ * @param {*} actionName 动作名称
+ * @param {*} waitTime 每次检查等待时间,默认3000
+ * @param {*} waitCounts 总检查次数，默认3次
  */
-function wait_and_click_points(wait_id, wait_desc, wait_class, wait_text, x, y, wait_time, wait_counts) {
+function clickNode(waitID, waitDesc, waitClass, waitText, actionName, waitTime, waitCounts) {
+    let bSuccess = false;    
 
-    let bSuccess = false;
-    let ele = undefined;
-    for (let i = 0; i < wait_counts; i++) {
-        sleep(wait_time);
+    if(waitTime==undefined){
+        waitTime = 3000;
+    }
+    if(waitCounts==undefined){
+        waitCounts = 3;
+    }
+    for (let i = 0; i < waitCounts; i++) {
+        sleep(waitTime);
 
-        if (wait_id !== undefined) {
-            ele = id(wait_id);
+        let ele = getNode(waitID, waitDesc, waitClass, waitText);
+
+        if (ele.exists()) {
+            ele.click();
+            bSuccess = true;
+            break;
         }
+    }
 
-        if (wait_desc !== undefined) {
-            if (ele === undefined) {
-                ele = id(wait_desc);
-            }
-            else {
-                ele = ele.desc(wait_desc);
-            }
-        }
-        
-        if (id("com.kingpoint.gmcchh:id/txTitle").text("签到有礼").exists()) {
+    if (bSuccess) {
+        toast(actionName + "成功。");
+        console.info(actionName + "成功。")
+    }
+    else {
+        toast(actionName + "失败。");
+        console.error(actionName + "失败。")
+    }
+}
+
+/**
+ * 等待节点出现并点击坐标
+ * @param {*} waitID id
+ * @param {*} waitDesc desc
+ * @param {*} waitClass class
+ * @param {*} waitText text
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} actionName 动作名称
+ * @param {*} waitTime 每次检查等待时间,默认3000
+ * @param {*} waitCounts 总检查次数，默认3次
+ */
+function waitNodeAndClickPoint(waitID, waitDesc, waitClass, waitText, x, y, actionName, waitTime, waitCounts) {
+    let bSuccess = false;    
+
+    if(waitTime==undefined){
+        waitTime = 3000;
+    }
+    if(waitCounts==undefined){
+        waitCounts = 3;
+    }
+    for (let i = 0; i < waitCounts; i++) {
+        sleep(waitTime);
+
+        let ele = getNode(waitID, waitDesc, waitClass, waitText);
+
+        if (ele.exists()) {
             click(705, 1096);
             bSuccess = true;
             break;
         }
     }
+
     if (bSuccess) {
-        toast("签到成功。");
+        toast(actionName + "成功。");
+        console.info(actionName + "成功。")
     }
     else {
-        log("error。签到失败。");
+        toast(actionName + "失败。");
+        console.error(actionName + "失败。")
     }
+}
+
+function getNode(waitID, waitDesc, waitClass, waitText) {
+    let ele = undefined;
+    
+    if (waitID != "") {
+        ele = id(waitID);
+    }
+
+    if (waitDesc != "") {
+        if (ele == undefined) {
+            ele = desc(waitDesc);
+        }
+        else {
+            ele = ele.desc(waitDesc);
+        }
+    }
+
+    if (waitClass != "") {
+        if (ele == undefined) {
+            ele = className(waitClass);
+        }
+        else {
+            ele = ele.className(waitClass);
+        }
+    }
+
+    if (waitText != "") {
+        if (ele == undefined) {
+            ele = textContains(waitText);
+        }
+        else {
+            ele = ele.textContains(waitDesc);
+        }
+    }
+    return ele;
 }
 
 /**
@@ -931,20 +1017,20 @@ function handwork(_text, timer) {
 }
 
 module.exports = {
+    startApp:startApp,
+    clickNode:clickNode,
+    waitNodeAndClickPoint:waitNodeAndClickPoint,
     swipe_up: swipe_up,
     handwork: handwork,
     be_careful: be_careful,
     swipe_down: swipe_down,
     unlock: unlock, // 解锁
     clear_recent: clear_recent, // 结束最近任务
-    start_app: start_app, // 脚本运行的前置+后置自动化操作，包括屏幕解锁，自动按键监听，移出最近任务，启动 App，执行脚本，结束进程等。
+    start_app: startApp, // 脚本运行的前置+后置自动化操作，包括屏幕解锁，自动按键监听，移出最近任务，启动 App，执行脚本，结束进程等。
     wait_for: wait_for, // 等待文本出现
     has_text: has_text, // 当前屏幕是否存在文本
     vibrate: vibrate, // 设备震动
     say_hi: say_hi, // 获取问候语
-    log: log, // 普通日志
-    warn: warn, // 警告日志
-    error: error, // 错误日志
     verbose: verbose, // 调试日志
     time2str: time2str, // 时间转字符串
     time2date: time2date, // 时间转日期
@@ -971,7 +1057,7 @@ module.exports = {
     get_seconds: get_seconds, // 返回秒
     set_volume: set_volume, // 设置设备音量
     set_runing_tip: set_runing_tip, // 通知栏提示内容设置
-    key_event: key_event, // 音量加结束脚本
+    key_event: addKeyEvent, // 音量加结束脚本
     string2date: string2date, // 字符串转日期
     get_last_month_year: get_last_month_year, // 获取上个月的年份
     count_work_day: count_work_day, // 获取工作天数
