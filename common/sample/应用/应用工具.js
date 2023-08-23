@@ -8,9 +8,9 @@ switch(i){
 case 0:
     //获取应用包名
     appName = rawInput("请输入应用名称", "QQ");
-    packageName = getPackageName(appName);
-    toast(packageName);
-    setClip(packageName);
+    appName = getPackageName(appName);
+    toast(appName);
+    setClip(appName);
     toast("已复制到剪贴板");
     break;
 case 1:
@@ -21,11 +21,11 @@ case 1:
 case 2:
     //卸载应用
     appName = rawInput("请输入应用名称");
-    packageName = getPackageName(appName);
-    if(packageName == ""){
+    appName = getPackageName(appName);
+    if(appName == ""){
         toast("应用不存在");
-    }else if(confirm("确定卸载应用" + packageName + "吗？")){
-        app.uninstall(packageName);
+    }else if(confirm("确定卸载应用" + appName + "吗？")){
+        app.uninstall(appName);
     }
     break;
 }

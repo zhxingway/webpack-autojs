@@ -1,23 +1,282 @@
 /**
- * 仓库：https://github.com/kangour/autojs_sdk
- */
+autojs的封装操作
 
-/*
-// 导入：从 lib.js 导入需要的方法
-let { start_app, click_item, set_volume, wait_befor_click } = require('lib.js');
+*/
 
-// 编写主函数：程序启动后执行的逻辑代码。
-function main() {
-    wait_befor_click('发现', '跳过')
-    click_item('发现')
-    click_item('每日推荐')
-    click_item('播放全部')
-    set_volume(30)
+function cUtils() {
+
 }
 
-// 启动应用：传入参数依次为：主函数，要启动的 App 名称，当前应用描述，是否语音播报执行状态。
-start_app(main, '网易云音乐', '播放日推', true)
-*/
+/**
+ * 脚本运行的前置+后置自动化操作，包括屏幕解锁，自动按键监听，移出最近任务，启动 App，执行脚本，结束进程等。
+ * @param {*} appName 需要启动的 App，如：网易云音乐
+ * @param {*} isStop 是否停止
+ * @param {*} useTTS 是否使用结束语音，传入 true 时，会在运行结束前给出语音提示
+ */
+cUtils.prototype.startApp = function (appName, isStop, useTTS) {
+    bSuccess = false;
+    try {
+        if (appName) {
+            while (!device.isScreenOn()) {
+                unlock();
+            }
+
+            addKeyEvent();
+            sleep(800);
+
+            if (isStop) {
+                this.stopApp(appName);
+            }
+
+            launchApp(appName);
+            sleep(10000);
+
+            bSuccess = true;
+            this.toastAndInfo(appName + '成功');
+
+            if (useTTS) {
+                this.tts_report(appName + '成功');
+            }
+        }
+    }
+    catch (error) {
+        console.error('Error in startApp: ' + error.message);
+        if (useTTS) {
+            this.tts_report(appName + '出错');
+        }
+    }
+
+    return bSuccess;
+}
+
+/**
+ * 杀掉App
+ * @param {*} appName 名称，如：网易云音乐
+ */
+cUtils.prototype.stopApp = function (appName) {
+    try {
+        var name = getPackageName(appName);
+        if (!name) {
+            if (getAppName(appName)) {
+                name = appName;
+            } else {
+                return false;
+            }
+        }
+
+        app.openAppSetting(name);
+        sleep(3000);
+        this.waitNodeAndClickNode("应用详情", "", "", "结束运行", "");
+    }
+    catch (error) {
+        console.error('Error in stopApp: ' + error.message);
+        if (useTTS) {
+            this.tts_report(`退出${appName}出错`);
+        }
+    }
+}
+
+/**
+ * 弹窗并记录
+ * @param {*} content 内容
+ */
+cUtils.prototype.toastAndInfo = function (content) {
+    toast(content);
+    console.info(content);
+}
+
+/**
+ * 弹窗并记录错误
+ * @param {*} content 内容
+ */
+cUtils.prototype.toastAndError = function (content) {
+    toast(content);
+    console.error(content);
+}
+
+/**
+ * 等待节点出现并点击坐标
+* @param {*} actionName 动作名称
+ * @param {*} waitText text
+ * @param {*} waitID id
+ * @param {*} waitClass class
+ * @param {*} waitDesc desc
+ * @param {*} x
+ * @param {*} y
+ * @param {*} waitTime 每次检查等待时间,默认3000
+ * @param {*} waitCounts 总检查次数，默认3次
+ */
+cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText,waitID, waitClass,waitDesc, x, y, waitTime, waitCounts) {
+    let bSuccess = false;
+    try {
+        if (waitTime == undefined) {
+            waitTime = 3000;
+        }
+        if (waitCounts == undefined) {
+            waitCounts = 3;
+        }
+        for (let i = 0; i < waitCounts; i++) {
+            sleep(waitTime);
+
+            let ele = this.getNode(waitID, waitDesc, waitClass, waitText);
+
+            if (ele.exists()) {
+                click(705, 1096);
+                bSuccess = true;
+                break;
+            }
+        }
+
+        if (bSuccess) {
+            toast(actionName + "成功。");
+            console.info(actionName + "成功。")
+        }
+        else {
+            toast(actionName + "失败。");
+            console.error(actionName + "失败。")
+        }
+    }
+    catch (error) {
+        console.error(error.message);
+    }
+
+    return bSuccess;
+}
+
+/**
+ * 点击结点
+ * @param {*} actionName 动作名称
+ * @param {*} waitText text
+ * @param {*} waitID id
+ * @param {*} waitClass class
+ * @param {*} waitDesc desc
+ * @param {*} waitTime 每次检查等待时间,默认3000
+ * @param {*} waitCounts 总检查次数，默认3次
+ */
+cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText,waitID, waitClass,waitDesc, waitTime, waitCounts) {
+    let bSuccess = false;
+
+    try {
+        if (waitTime == undefined) {
+            waitTime = 3000;
+        }
+        if (waitCounts == undefined) {
+            waitCounts = 3;
+        }
+        for (let i = 0; i < waitCounts; i++) {
+            sleep(waitTime);
+
+            let ele = this.getNode(waitID, waitDesc, waitClass, waitText);
+
+            if (ele.exists() && ele.clickable()) {
+                ele.click();
+                bSuccess = true;
+                break;
+            }
+        }
+
+        if (bSuccess) {
+            toast(actionName + "成功。");
+            console.info(actionName + "成功。")
+        }
+        else {
+            toast(actionName + "失败。");
+            console.error(actionName + "失败。")
+        }
+    }
+    catch (error) {
+        console.error(error.message);
+    }
+
+    return bSuccess;
+}
+
+cUtils.prototype.getNode = function (waitID, waitDesc, waitClass, waitText) {
+    let ele = undefined;
+
+    if (waitID != "") {
+        ele = id(waitID);
+    }
+
+    if (waitDesc != "") {
+        if (ele == undefined) {
+            ele = desc(waitDesc);
+        }
+        else {
+            ele = ele.desc(waitDesc);
+        }
+    }
+
+    if (waitClass != "") {
+        if (ele == undefined) {
+            ele = className(waitClass);
+        }
+        else {
+            ele = ele.className(waitClass);
+        }
+    }
+
+    if (waitText != "") {
+        if (ele == undefined) {
+            ele = textContains(waitText);
+        }
+        else {
+            ele = ele.textContains(waitDesc);
+        }
+    }
+    return ele;
+}
+
+/**
+ * 给出语音提示
+ * @param {*} _text 
+ */
+cUtils.prototype.tts_report = function (_text) {
+    importClass(java.io.File);
+    importClass(android.speech.tts.TextToSpeech);
+    let ttsStatus = false;
+    let ttsListener = new TextToSpeech.OnInitListener({
+        onInit: function (status) {
+            if (status == TextToSpeech.SUCCESS) {
+                let ttsSetLanguageResult = TTS.setLanguage(TTS.getDefaultVoice().getLocale()/*ttsLanguage*/);
+                if (ttsSetLanguageResult != TextToSpeech.LANG_MISSING_DATA && ttsSetLanguageResult != TextToSpeech.LANG_NOT_SUPPORTED) {
+                    ttsStatus = true;
+                    TTS.stop();
+                    speech(_text);
+                    // let file = "/sdcard/xxx.mp3";
+                    // speech(_text, file);
+                } else {
+                    toast("TTS不支持当前语言");
+                }
+            } else {
+                toast("初始化TTS失败");
+            }
+        }
+    })
+    let TTS = new TextToSpeech(context, ttsListener);
+    function speech(ttsText, fileName) {
+        if (TTS && ttsStatus) {
+            if (ttsText.length <= TextToSpeech.getMaxSpeechInputLength()) {
+                if (fileName) {
+                    let file = new File(fileName);
+                    if (!file.exists()) {
+                        file.createNewFile();
+                    }
+                    TTS.synthesizeToFile(ttsText, null, file, Math.random());
+                } else {
+                    TTS.speak(ttsText, TextToSpeech.QUEUE_FLUSH/*QUEUE_FLUSH插队，QUEUE_ADD排队*/, null);
+                }
+                return true;
+            } else {
+                toast("朗读文本过长");
+                return false;
+            }
+        } else {
+            toast("TTS未准备好");
+            return false;
+        }
+    }
+}
 
 operation_app = ''
 window = {
@@ -490,90 +749,6 @@ function clear_recent(operation_app) {
     }
     home()
 }
-/**
- * 脚本运行的前置+后置自动化操作，包括屏幕解锁，自动按键监听，移出最近任务，启动 App，执行脚本，结束进程等。
- * @param {*} appName 需要启动的 App，如：网易云音乐
- * @param {*} scriptName 当前脚本描述，如：播放日推
- * @param {*} callback 启动 App 后需要执行的内容
- * @param {*} useTTS 是否使用结束语音，传入 true 时，会在运行结束前给出语音提示
- * @param {*} closeApp 是否关闭APP
- */
-function startApp(appName, scriptName, callback, useTTS, closeApp) {
-    if (closeApp == undefined) closeApp = false
-    //if (closeApp == true) clear_recent(appName)
-
-    scriptName = scriptName != undefined ? scriptName : appName
-    if (appName) {
-        while (!device.isScreenOn()) {
-            unlock();
-        }
-
-        addKeyEvent();
-        sleep(800)
-
-        launchApp(appName);
-        sleep(10000)
-
-        if (useTTS) {
-            tts_report(scriptName + '成功')
-        }
-
-        toast(scriptName + '成功');
-        console.info(scriptName + '成功');
-    }
-}
-
-/**
- * 给出语音提示
- * @param {*} _text 
- */
-function tts_report(_text) {
-    warn(_text)
-    importClass(java.io.File);
-    importClass(android.speech.tts.TextToSpeech);
-    let ttsStatus = false;
-    let ttsListener = new TextToSpeech.OnInitListener({
-        onInit: function (status) {
-            if (status == TextToSpeech.SUCCESS) {
-                let ttsSetLanguageResult = TTS.setLanguage(TTS.getDefaultVoice().getLocale()/*ttsLanguage*/);
-                if (ttsSetLanguageResult != TextToSpeech.LANG_MISSING_DATA && ttsSetLanguageResult != TextToSpeech.LANG_NOT_SUPPORTED) {
-                    ttsStatus = true;
-                    TTS.stop();
-                    speech(_text);
-                    // let file = "/sdcard/xxx.mp3";
-                    // speech(_text, file);
-                } else {
-                    toast("TTS不支持当前语言");
-                }
-            } else {
-                toast("初始化TTS失败");
-            }
-        }
-    })
-    let TTS = new TextToSpeech(context, ttsListener);
-    function speech(ttsText, fileName) {
-        if (TTS && ttsStatus) {
-            if (ttsText.length <= TextToSpeech.getMaxSpeechInputLength()) {
-                if (fileName) {
-                    let file = new File(fileName);
-                    if (!file.exists()) {
-                        file.createNewFile();
-                    }
-                    TTS.synthesizeToFile(ttsText, null, file, Math.random());
-                } else {
-                    TTS.speak(ttsText, TextToSpeech.QUEUE_FLUSH/*QUEUE_FLUSH插队，QUEUE_ADD排队*/, null);
-                }
-                return true;
-            } else {
-                toast("朗读文本过长");
-                return false;
-            }
-        } else {
-            toast("TTS未准备好");
-            return false;
-        }
-    }
-}
 
 /**
  * 颜色点击
@@ -633,126 +808,6 @@ function wait_for(_text) {
         }
         sleep(800)
     }
-}
-
-/**
- * 点击结点
- * @param {*} waitID id
- * @param {*} waitDesc desc
- * @param {*} waitClass class
- * @param {*} waitText text
- * @param {*} actionName 动作名称
- * @param {*} waitTime 每次检查等待时间,默认3000
- * @param {*} waitCounts 总检查次数，默认3次
- */
-function clickNode(waitID, waitDesc, waitClass, waitText, actionName, waitTime, waitCounts) {
-    let bSuccess = false;    
-
-    if(waitTime==undefined){
-        waitTime = 3000;
-    }
-    if(waitCounts==undefined){
-        waitCounts = 3;
-    }
-    for (let i = 0; i < waitCounts; i++) {
-        sleep(waitTime);
-
-        let ele = getNode(waitID, waitDesc, waitClass, waitText);
-
-        if (ele.exists()) {
-            ele.click();
-            bSuccess = true;
-            break;
-        }
-    }
-
-    if (bSuccess) {
-        toast(actionName + "成功。");
-        console.info(actionName + "成功。")
-    }
-    else {
-        toast(actionName + "失败。");
-        console.error(actionName + "失败。")
-    }
-}
-
-/**
- * 等待节点出现并点击坐标
- * @param {*} waitID id
- * @param {*} waitDesc desc
- * @param {*} waitClass class
- * @param {*} waitText text
- * @param {*} x 
- * @param {*} y 
- * @param {*} actionName 动作名称
- * @param {*} waitTime 每次检查等待时间,默认3000
- * @param {*} waitCounts 总检查次数，默认3次
- */
-function waitNodeAndClickPoint(waitID, waitDesc, waitClass, waitText, x, y, actionName, waitTime, waitCounts) {
-    let bSuccess = false;    
-
-    if(waitTime==undefined){
-        waitTime = 3000;
-    }
-    if(waitCounts==undefined){
-        waitCounts = 3;
-    }
-    for (let i = 0; i < waitCounts; i++) {
-        sleep(waitTime);
-
-        let ele = getNode(waitID, waitDesc, waitClass, waitText);
-
-        if (ele.exists()) {
-            click(705, 1096);
-            bSuccess = true;
-            break;
-        }
-    }
-
-    if (bSuccess) {
-        toast(actionName + "成功。");
-        console.info(actionName + "成功。")
-    }
-    else {
-        toast(actionName + "失败。");
-        console.error(actionName + "失败。")
-    }
-}
-
-function getNode(waitID, waitDesc, waitClass, waitText) {
-    let ele = undefined;
-    
-    if (waitID != "") {
-        ele = id(waitID);
-    }
-
-    if (waitDesc != "") {
-        if (ele == undefined) {
-            ele = desc(waitDesc);
-        }
-        else {
-            ele = ele.desc(waitDesc);
-        }
-    }
-
-    if (waitClass != "") {
-        if (ele == undefined) {
-            ele = className(waitClass);
-        }
-        else {
-            ele = ele.className(waitClass);
-        }
-    }
-
-    if (waitText != "") {
-        if (ele == undefined) {
-            ele = textContains(waitText);
-        }
-        else {
-            ele = ele.textContains(waitDesc);
-        }
-    }
-    return ele;
 }
 
 /**
@@ -918,63 +973,6 @@ function time2str(_time) {
     return result
 }
 
-/**
- * 简写的日志输出
- */
-function error() {
-    res = Array.prototype.slice.call(arguments).join(' ')
-    // toast(res)
-    console.error(res)
-    // if (operation_app != '') res = operation_app + res
-    set_runing_tip(res)
-}
-function warn() {
-    res = Array.prototype.slice.call(arguments).join(' ')
-    toast(res)
-    console.warn(res)
-    // if (operation_app != '') res = operation_app + res
-    set_runing_tip(res)
-}
-function log() {
-    res = Array.prototype.slice.call(arguments).join(' ')
-    console.log(res)
-    // toast(res)
-    // if (operation_app != '') res = operation_app + res
-    set_runing_tip(res)
-}
-function verbose() {
-    res = Array.prototype.slice.call(arguments).join(' ')
-    console.verbose(res)
-    // if (operation_app != '') res = operation_app + res
-    set_runing_tip(res)
-}
-
-/**
- * 获取问候语
- */
-function say_hi() {
-    let hour = get_hours()
-    let greet = "Hi"
-    if (hour <= 3) {
-        greet = "晚安"
-    } else if (hour < 9) {
-        greet = "早上好"
-    } else if (hour < 12) {
-        greet = "上午好"
-    } else if (hour < 14) {
-        greet = "中午好"
-    } else if (hour < 18) {
-        greet = "下午好"
-    } else if (hour < 24) {
-        greet = "晚上好"
-    }
-    return greet
-}
-
-function click_id(id_name) {
-    id(id_name).findOne().click()
-}
-
 function swipe_down() {
     swipe(500, 500, 500, 1500, 500)
     sleep(800)
@@ -1016,50 +1014,4 @@ function handwork(_text, timer) {
     }
 }
 
-module.exports = {
-    startApp:startApp,
-    clickNode:clickNode,
-    waitNodeAndClickPoint:waitNodeAndClickPoint,
-    swipe_up: swipe_up,
-    handwork: handwork,
-    be_careful: be_careful,
-    swipe_down: swipe_down,
-    unlock: unlock, // 解锁
-    clear_recent: clear_recent, // 结束最近任务
-    start_app: startApp, // 脚本运行的前置+后置自动化操作，包括屏幕解锁，自动按键监听，移出最近任务，启动 App，执行脚本，结束进程等。
-    wait_for: wait_for, // 等待文本出现
-    has_text: has_text, // 当前屏幕是否存在文本
-    vibrate: vibrate, // 设备震动
-    say_hi: say_hi, // 获取问候语
-    verbose: verbose, // 调试日志
-    time2str: time2str, // 时间转字符串
-    time2date: time2date, // 时间转日期
-    random_sleep: random_sleep, // 0 到 200 s 随机睡眠
-    total_seconds_delta: total_seconds_delta, // 获取倒计时
-    click_item: click_item, // 任意类型的文本点击
-    click_color: click_color, // 颜色点击
-    click_id: click_id,
-    find_color: find_color,
-    has_color: has_color,
-    wait_for_color: wait_for_color,
-    click_item_each: click_item_each, // 任意类型的文本循环点击
-    click_color_each: click_color_each, // 颜色循环点击
-    wait_befor_click: wait_befor_click, // 接口描述：等待某文本出现之前的点击。 场景举例：启动网易云音乐时，等待首页出现之前，点击跳过按钮 wait_befor_click('我的', '跳过')
-    get_coord_by_color: get_coord_by_color, // 通过颜色获取坐标
-    get_coord_by_text: get_coord_by_text, // 获取文本坐标，文本点击时自动调用
-    get_last_month: get_last_month, // 获取上个月月份
-    get_year: get_year, // 获取年份
-    get_month: get_month, // 获取月份
-    get_date: get_date, // 返回日期
-    get_day: get_day, // 返回星期
-    get_hours: get_hours, // 返回小时
-    get_minutes: get_minutes, // 返回分钟
-    get_seconds: get_seconds, // 返回秒
-    set_volume: set_volume, // 设置设备音量
-    set_runing_tip: set_runing_tip, // 通知栏提示内容设置
-    key_event: addKeyEvent, // 音量加结束脚本
-    string2date: string2date, // 字符串转日期
-    get_last_month_year: get_last_month_year, // 获取上个月的年份
-    count_work_day: count_work_day, // 获取工作天数
-    set_runing_tip_position: set_runing_tip_position, // 设置状态栏位置
-}
+module.exports = cUtils;

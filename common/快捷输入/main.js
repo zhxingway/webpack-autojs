@@ -22,8 +22,8 @@ ui.layout(
         </horizontal>
     </vertical>
 );
-var common = require("../../common/common.js");
-const { resetConsole } = require("../../common/common.js");
+var common = require("../common.js");
+const { resetConsole } = require("../common.js");
 var filePath = "/sdcard/Download/";
 var storage = storages.create("com.example.kjsr");
 var totalhs = storage.get("totalhs", 3);

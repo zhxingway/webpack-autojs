@@ -1,5 +1,5 @@
-const { waitTime } = require("../../common/common");
-const common = require("../../common/common");
+const { waitTime } = require("../common");
+const common = require("../common");
 
 var qqmsg={};
 
