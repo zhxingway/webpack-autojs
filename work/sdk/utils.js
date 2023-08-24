@@ -64,9 +64,10 @@ cUtils.prototype.stopApp = function (appName) {
             }
         }
 
+        this.toastAndInfo(`打开应用详情：${appName}`);
         app.openAppSetting(name);
         sleep(3000);
-        this.waitNodeAndClickNode("应用详情", "", "", "结束运行", "");
+        this.waitNodeAndClickNode("应用详情", "结束运行","", "",  "");
     }
     catch (error) {
         console.error('Error in stopApp: ' + error.message);
@@ -118,7 +119,7 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText,waitID, 
         for (let i = 0; i < waitCounts; i++) {
             sleep(waitTime);
 
-            let ele = this.getNode(waitID, waitDesc, waitClass, waitText);
+            let ele = this.getNode(waitText,waitID, waitClass,waitDesc);
 
             if (ele.exists()) {
                 click(705, 1096);
@@ -137,7 +138,7 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText,waitID, 
         }
     }
     catch (error) {
-        console.error(error.message);
+        console.error('Error in waitNodeAndClickPoint: ' + error.message);
     }
 
     return bSuccess;
@@ -157,22 +158,24 @@ cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText,waitID, w
     let bSuccess = false;
 
     try {
-        if (waitTime == undefined) {
+        if (waitTime == undefined || waitTime == "") {
             waitTime = 3000;
         }
-        if (waitCounts == undefined) {
+        if (waitCounts == undefined || waitCounts == "") {
             waitCounts = 3;
         }
+        console.trace(`waitTime=${waitTime},waitCounts=${waitCounts}`);
         for (let i = 0; i < waitCounts; i++) {
             sleep(waitTime);
-
-            let ele = this.getNode(waitID, waitDesc, waitClass, waitText);
-
+            console.trace(`getNode before`);
+            let ele = this.getNode(waitText,waitID, waitClass,waitDesc);
+            console.trace(`ele.exists()=${ele.exists()} ele.clickable()=${ele.clickable()}`);
             if (ele.exists() && ele.clickable()) {
                 ele.click();
                 bSuccess = true;
                 break;
             }
+            console.trace(`i=${i}`);
         }
 
         if (bSuccess) {
@@ -185,13 +188,14 @@ cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText,waitID, w
         }
     }
     catch (error) {
-        console.error(error.message);
+        console.error('Error in waitNodeAndClickNode: ' + error.message);
     }
 
     return bSuccess;
 }
 
-cUtils.prototype.getNode = function (waitID, waitDesc, waitClass, waitText) {
+
+cUtils.prototype.getNode = function (waitText,waitID, waitClass,waitDesc) {
     let ele = undefined;
 
     if (waitID != "") {

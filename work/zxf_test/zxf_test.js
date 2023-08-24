@@ -13,19 +13,27 @@ auto.waitFor();
 
 ///////////
 bSuccess = utils.startApp('中国移动广东', true, true);
+sleep(1000);
 if (bSuccess) {
+    utils.waitNodeAndClickNode("允许", "", "android:id/button1", "android.widget.Button", "");
+    sleep(1000);
+    
     utils.waitNodeAndClickNode("关闭弹窗", "", "com.kingpoint.gmcchh:id/img_close", "", "关闭");
 
-    utils.waitNodeAndClickNode("右上角签到", "","com.kingpoint.gmcchh:id/image_first", "","签到有礼");
+    utils.waitNodeAndClickNode("右上角签到", "", "com.kingpoint.gmcchh:id/image_first", "", "签到有礼");
 
     sleep(5000);
 
-    utils.waitNodeAndClickPoint("签到", "签到有礼","com.kingpoint.gmcchh:id/txTitle", "",  "", 705, 1096);
+    utils.waitNodeAndClickPoint("签到", "签到有礼", "com.kingpoint.gmcchh:id/txTitle", "", "", 705, 1096);
 }
 
 bSuccess = utils.startApp('淘宝', true, true);
+sleep(1000);
 if (bSuccess) {
-    utils.waitNodeAndClickNode("左上角签到", "", "签到", "android.widget.FrameLayout","");
+    utils.waitNodeAndClickNode("允许", "", "android:id/button1", "android.widget.Button", "");
+    sleep(1000);
+    
+    utils.waitNodeAndClickNode("左上角签到", "", "签到", "android.widget.FrameLayout", "");
     sleep(1000);
 
     utils.waitNodeAndClickNode("右上角签到", "com.kingpoint.gmcchh:id/image_first", "签到有礼", "", "");
