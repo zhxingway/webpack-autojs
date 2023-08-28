@@ -67,7 +67,7 @@ cUtils.prototype.stopApp = function (appName) {
         this.toastAndInfo(`打开应用详情：${appName}`);
         app.openAppSetting(name);
         sleep(3000);
-        this.waitNodeAndClickNode("应用详情", "结束运行","", "",  "");
+        this.waitNodeAndClickNode("应用详情", "结束运行", "", "", "");
     }
     catch (error) {
         console.error('Error in stopApp: ' + error.message);
@@ -107,7 +107,7 @@ cUtils.prototype.toastAndError = function (content) {
  * @param {*} waitTime 每次检查等待时间,默认3000
  * @param {*} waitCounts 总检查次数，默认3次
  */
-cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText,waitID, waitClass,waitDesc, x, y, waitTime, waitCounts) {
+cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText, waitID, waitClass, waitDesc, x, y, waitTime, waitCounts) {
     let bSuccess = false;
     try {
         if (waitTime == undefined) {
@@ -119,7 +119,7 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText,waitID, 
         for (let i = 0; i < waitCounts; i++) {
             sleep(waitTime);
 
-            let ele = this.getNode(waitText,waitID, waitClass,waitDesc);
+            let ele = this.getNode(waitText, waitID, waitClass, waitDesc);
 
             if (ele.exists()) {
                 click(705, 1096);
@@ -144,6 +144,42 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText,waitID, 
     return bSuccess;
 }
 
+
+/**
+ * 配置日志格式
+ * @param {*} file {string} 日志文件路径
+ * @param {*} maxFileSize {number} 单位字节
+ * @param {*} rootLevel {string} 写入的日志级别，"DEBUG", "INFO", "WARN", "ERROR", "FATAL"
+ * @param {*} maxBackupSize  {number} 日志备份文件最大数量
+ */
+cUtils.prototype.console_setGlobalLogConfig = function (file, maxFileSize, rootLevel, maxBackupSize) {
+
+    config_default = {
+        "file": "/sdcard/脚本/log.txt",
+        "maxFileSize": 10000,
+        "rootLevel": "WARN",
+        "maxBackupSize": 1
+    };
+    console.log(config_default);
+    if (file != "") {
+        config_default["file"] = "/sdcard/脚本/" + file + ".txt";
+    }
+
+    if (maxFileSize != 0) {
+        config_default["maxFileSize"] = maxFileSize;
+    }
+
+    if (rootLevel != "") {
+        config_default["rootLevel"] = rootLevel;
+    }
+
+    if (maxBackupSize != 0) {
+        config_default["maxBackupSize"] = maxBackupSize;
+    }
+    console.log(config_default);
+    console.setGlobalLogConfig(config_default);
+}
+
 /**
  * 点击结点
  * @param {*} actionName 动作名称
@@ -154,7 +190,7 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText,waitID, 
  * @param {*} waitTime 每次检查等待时间,默认3000
  * @param {*} waitCounts 总检查次数，默认3次
  */
-cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText,waitID, waitClass,waitDesc, waitTime, waitCounts) {
+cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText, waitID, waitClass, waitDesc, waitTime, waitCounts) {
     let bSuccess = false;
 
     try {
@@ -164,18 +200,18 @@ cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText,waitID, w
         if (waitCounts == undefined || waitCounts == "") {
             waitCounts = 3;
         }
-        console.trace(`waitTime=${waitTime},waitCounts=${waitCounts}`);
+        console.log(`waitTime=${waitTime},waitCounts=${waitCounts}`);
         for (let i = 0; i < waitCounts; i++) {
             sleep(waitTime);
-            console.trace(`getNode before`);
-            let ele = this.getNode(waitText,waitID, waitClass,waitDesc);
-            console.trace(`ele.exists()=${ele.exists()} ele.clickable()=${ele.clickable()}`);
+            console.log(`getNode before`);
+            let ele = this.getNode(waitText, waitID, waitClass, waitDesc);
+            console.log(`ele.exists()=${ele.exists()} ele.clickable()=${ele.clickable()}`);
             if (ele.exists() && ele.clickable()) {
                 ele.click();
                 bSuccess = true;
                 break;
             }
-            console.trace(`i=${i}`);
+            console.log(`i=${i}`);
         }
 
         if (bSuccess) {
@@ -195,7 +231,7 @@ cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText,waitID, w
 }
 
 
-cUtils.prototype.getNode = function (waitText,waitID, waitClass,waitDesc) {
+cUtils.prototype.getNode = function (waitText, waitID, waitClass, waitDesc) {
     let ele = undefined;
 
     if (waitID != "") {

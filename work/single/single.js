@@ -8,21 +8,19 @@ const utils = new cUtils();
 auto();
 auto.waitFor();
 
+console.show();
+console.log(`debug`);
+utils.console_setGlobalLogConfig(file="zxf_test",maxFileSize=0,rootLevel="INFO",maxBackupSize=0);
+console.log(`debug`);
+console.info(`info`);
+console.warn(`warn`);
+console.error(`warn`);
+debugger;
+
 //wxRemind.pushMessage('开始');
 
 ///////////
-bSuccess = utils.startApp('淘宝', true, true);
-sleep(1000);
-if (bSuccess) {
-    utils.waitNodeAndClickNode("允许", "", "android:id/button1", "android.widget.Button", "");
-    sleep(1000);
+//utils.waitNodeAndClickNode("赚元宝", "赚元宝", "", "android.widget.Button", "");
 
-    utils.waitNodeAndClickNode("左上角签到", "", "", "android.widget.FrameLayout", "签到");
-    sleep(8000);
+//utils.waitNodeAndClickNode(`去逛逛${1}`, "去逛逛", "", "android.widget.Button", "");
 
-    utils.waitNodeAndClickNode("立即签到", "立即签到", "", "android.widget.Button", "");
-
-    sleep(20000);
-
-
-}

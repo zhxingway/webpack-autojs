@@ -1,6 +1,6 @@
 {
     "name": "sdk",
-    "main": "lib.js",
+    "main": "utils.js",
     "ignore": [
         "build"
     ],
