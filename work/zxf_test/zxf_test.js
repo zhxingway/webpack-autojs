@@ -25,6 +25,10 @@ if (bSuccess) {
     sleep(5000);
 
     utils.waitNodeAndClickPoint("签到", "签到有礼", "com.kingpoint.gmcchh:id/txTitle", "", "", 705, 1096);
+
+    sleep(3000);
+
+    utils.stopApp('中国移动广东');
 }
 
 bSuccess = utils.startApp('淘宝', true, true);
@@ -37,25 +41,30 @@ if (bSuccess) {
     utils.waitNodeAndClickNode("左上角签到", "", "", "android.widget.FrameLayout", "签到");
     sleep(8000);
 
-    //TODO:签到后退出去了吗？
     utils.waitNodeAndClickNode("立即签到", "立即签到", "", "android.widget.Button", "");
 
-    utils.waitNodeAndClickNode("关闭日历提醒", "关闭", "", "android.widget.Button", "");
+    utils.waitNodeAndClickNode("关闭日历提醒", "关闭", "", "android.widget.Button", "");    
 
     utils.waitNodeAndClickNode("点击领取", "点击领取", "", "android.widget.Button", "");
-    sleep(3000);
+    utils.toastAndInfo('等待红包');
+    sleep(30000);
 
-    utils.waitNodeAndClickNode("赚元宝", "赚元宝", "", "android.widget.Button", "");
+    utils.waitNodeAndClickNode("关闭红包提醒", "关闭", "", "android.widget.Button", "");
 
     for(let i=0;i<2;i++){
+        utils.waitNodeAndClickNode("赚元宝", "赚元宝", "", "android.widget.Button", "");
+
         utils.waitNodeAndClickNode(`去逛逛${i+1}`, "去逛逛", "", "android.widget.Button", "");
+        sleep(6000);
+        for(let j=0;j<6;j++){
+            utils.swipeUp();
+            sleep(6000);
+        }
+        sleep(6000);
+        utils.keys_back();
     }
 
-    //等待红包出现
-    sleep(30000);
-    //TODO:关闭红包
-
-
+    utils.stopApp('淘宝');
 }
 
 /////////////

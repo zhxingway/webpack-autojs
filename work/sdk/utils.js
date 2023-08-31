@@ -7,7 +7,110 @@ function cUtils() {
 
 }
 
-/**
+/*
+KEYCODE_MENU 1
+KEYCODE_SOFT_RIGHT 2
+KEYCODE_HOME 3
+KEYCODE_BACK 4
+KEYCODE_CALL 5
+KEYCODE_ENDCALL 6
+KEYCODE_0 7
+KEYCODE_1 8
+KEYCODE_2 9
+KEYCODE_3 10
+KEYCODE_4 11
+KEYCODE_5 12
+KEYCODE_6 13
+KEYCODE_7 14
+KEYCODE_8 15
+KEYCODE_9 16
+KEYCODE_STAR 17
+KEYCODE_POUND 18
+KEYCODE_DPAD_UP 19
+KEYCODE_DPAD_DOWN 20
+KEYCODE_DPAD_LEFT 21
+KEYCODE_DPAD_RIGHT 22
+KEYCODE_DPAD_CENTER 23
+KEYCODE_VOLUME_UP 24
+KEYCODE_VOLUME_DOWN 25
+KEYCODE_POWER 26
+KEYCODE_CAMERA 27
+KEYCODE_CLEAR 28
+KEYCODE_A 29
+KEYCODE_B 30
+KEYCODE_C 31
+KEYCODE_D 32
+KEYCODE_E 33
+KEYCODE_F 34
+KEYCODE_G 35
+KEYCODE_H 36
+KEYCODE_I 37
+KEYCODE_J 38
+KEYCODE_K 39
+KEYCODE_L 40
+KEYCODE_M 41
+KEYCODE_N 42
+KEYCODE_O 43
+KEYCODE_P 44
+KEYCODE_Q 45
+KEYCODE_R 46
+KEYCODE_S 47
+KEYCODE_T 48
+KEYCODE_U 49
+KEYCODE_V 50
+KEYCODE_W 51
+KEYCODE_X 52
+KEYCODE_Y 53
+KEYCODE_Z 54
+KEYCODE_COMMA 55
+KEYCODE_PERIOD 56
+KEYCODE_ALT_LEFT 57
+KEYCODE_ALT_RIGHT 58
+KEYCODE_SHIFT_LEFT 59
+KEYCODE_SHIFT_RIGHT 60
+KEYCODE_TAB 61
+KEYCODE_SPACE 62
+KEYCODE_SYM 63
+KEYCODE_EXPLORER 64
+KEYCODE_ENVELOPE 65
+KEYCODE_ENTER 66
+KEYCODE_DEL 67
+KEYCODE_GRAVE 68
+KEYCODE_MINUS 69
+KEYCODE_EQUALS 70
+KEYCODE_LEFT_BRACKET 71
+KEYCODE_RIGHT_BRACKET 72
+KEYCODE_BACKSLASH 73
+KEYCODE_SEMICOLON 74
+KEYCODE_APOSTROPHE 75
+KEYCODE_SLASH 76
+KEYCODE_AT 77
+KEYCODE_NUM 78
+KEYCODE_HEADSETHOOK 79
+KEYCODE_FOCUS 80
+KEYCODE_PLUS 81
+KEYCODE_MENU 82
+KEYCODE_NOTIFICATION 83
+KEYCODE_SEARCH 84
+TAG_LAST_ KEYCODE 85
+* @param {*} code 按键码
+*/
+cUtils.prototype.keys_KeyCode = function (code) {
+    this.toastAndInfo(`${code}`);
+    KeyCode(code);
+}
+
+cUtils.prototype.keys_back = function () {
+    this.toastAndInfo(`返回`);
+    back();
+}
+
+cUtils.prototype.keys_recents = function () {
+    this.toastAndInfo(`任务`);
+    recents()();
+}
+
+/*
  * 脚本运行的前置+后置自动化操作，包括屏幕解锁，自动按键监听，移出最近任务，启动 App，执行脚本，结束进程等。
  * @param {*} appName 需要启动的 App，如：网易云音乐
  * @param {*} isStop 是否停止
@@ -35,14 +138,14 @@ cUtils.prototype.startApp = function (appName, isStop, useTTS) {
             this.toastAndInfo(appName + '成功');
 
             if (useTTS) {
-                this.tts_report(appName + '成功');
+                this.ttsReport(appName + '成功');
             }
         }
     }
     catch (error) {
-        console.error('Error in startApp: ' + error.message);
+        this.console_error('Error in startApp: ' + error.message);
         if (useTTS) {
-            this.tts_report(appName + '出错');
+            this.ttsReport(appName + '出错');
         }
     }
 
@@ -67,14 +170,38 @@ cUtils.prototype.stopApp = function (appName) {
         this.toastAndInfo(`打开应用详情：${appName}`);
         app.openAppSetting(name);
         sleep(3000);
-        this.waitNodeAndClickNode("应用详情", "结束运行", "", "", "");
-    }
-    catch (error) {
-        console.error('Error in stopApp: ' + error.message);
-        if (useTTS) {
-            this.tts_report(`退出${appName}出错`);
+        node = this.getNode('结束运行', '', 'android.widget.TextView', '');
+        if (node == undefined || node == null) { }
+        else {
+            parentObj = this.getParentNode(node, 1);
+            if (parentObj == null) { }
+            else {
+                parentObj.click();
+                this.console_log(`click:${parentObj}`);
+
+                bSuccess = this.waitNodeAndClickNode('强行停止', '确定', '', '', '');
+                if(bSuccess){
+                    this.keys_back();
+                }
+
+            }
         }
     }
+    catch (error) {
+        this.console_error('Error in stopApp: ' + error.message);
+    }
+}
+
+cUtils.prototype.swipeDown = function () {
+    this.toastAndInfo(`下滑`);
+    swipe(500, 200, 500, 1000, 500);
+    sleep(800);
+}
+
+cUtils.prototype.swipeUp = function () {
+    this.toastAndInfo(`上滑`);
+    swipe(500, 1000, 500, 200, 500);
+    sleep(800);
 }
 
 /**
@@ -83,7 +210,7 @@ cUtils.prototype.stopApp = function (appName) {
  */
 cUtils.prototype.toastAndInfo = function (content) {
     toast(content);
-    console.info(content);
+    this.console_info(content);
 }
 
 /**
@@ -92,7 +219,7 @@ cUtils.prototype.toastAndInfo = function (content) {
  */
 cUtils.prototype.toastAndError = function (content) {
     toast(content);
-    console.error(content);
+    this.console_error(content);
 }
 
 /**
@@ -120,7 +247,9 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText, waitID,
             sleep(waitTime);
 
             let ele = this.getNode(waitText, waitID, waitClass, waitDesc);
-
+            if (ele == undefined || ele == null) {
+                continue;
+            }
             if (ele.exists()) {
                 click(705, 1096);
                 bSuccess = true;
@@ -130,15 +259,15 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText, waitID,
 
         if (bSuccess) {
             toast(actionName + "成功。");
-            console.info(actionName + "成功。")
+            this.console_info(actionName + "成功。")
         }
         else {
             toast(actionName + "失败。");
-            console.error(actionName + "失败。")
+            this.console_error(actionName + "失败。")
         }
     }
     catch (error) {
-        console.error('Error in waitNodeAndClickPoint: ' + error.message);
+        this.console_error('Error in waitNodeAndClickPoint: ' + error.message);
     }
 
     return bSuccess;
@@ -160,7 +289,7 @@ cUtils.prototype.console_setGlobalLogConfig = function (file, maxFileSize, rootL
         "rootLevel": "WARN",
         "maxBackupSize": 1
     };
-    console.log(config_default);
+    this.console_log(config_default);
     if (file != "") {
         config_default["file"] = "/sdcard/脚本/" + file + ".txt";
     }
@@ -176,9 +305,22 @@ cUtils.prototype.console_setGlobalLogConfig = function (file, maxFileSize, rootL
     if (maxBackupSize != 0) {
         config_default["maxBackupSize"] = maxBackupSize;
     }
-    console.log(config_default);
+    this.console_log(config_default);
     console.setGlobalLogConfig(config_default);
 }
+
+cUtils.prototype.console_log = function (info) {
+    console.log(info);
+}
+
+cUtils.prototype.console_info = function (info) {
+    console.info(info);
+}
+
+cUtils.prototype.console_error = function (info) {
+    console.error(info);
+}
+
 
 /**
  * 点击结点
@@ -200,55 +342,79 @@ cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText, waitID, 
         if (waitCounts == undefined || waitCounts == "") {
             waitCounts = 3;
         }
-        console.log(`waitTime=${waitTime},waitCounts=${waitCounts}`);
+        this.console_log(`waitTime=${waitTime},waitCounts=${waitCounts}`);
         for (let i = 0; i < waitCounts; i++) {
             sleep(waitTime);
-            console.log(`getNode before`);
+            this.console_log(`getNode before`);
             let ele = this.getNode(waitText, waitID, waitClass, waitDesc);
-            console.log(`ele.exists()=${ele.exists()} ele.clickable()=${ele.clickable()}`);
-            if (ele.exists() && ele.clickable()) {
-                ele.click();
+            if (ele == undefined || ele == null) {
+                continue;
+            }
+
+            this.console_log(`ele.exists()=${ele.exists()} ele.clickable()=${ele.clickable()}`);
+            if (ele.exists() && ele.clickable() && ele.enabled()) {
+                ele.findOne().click();
                 bSuccess = true;
                 break;
             }
-            console.log(`i=${i}`);
+            this.console_log(`i=${i}`);
         }
 
         if (bSuccess) {
             toast(actionName + "成功。");
-            console.info(actionName + "成功。")
+            this.console_info(actionName + "成功。")
         }
         else {
             toast(actionName + "失败。");
-            console.error(actionName + "失败。")
+            this.console_error(actionName + "失败。")
         }
     }
     catch (error) {
-        console.error('Error in waitNodeAndClickNode: ' + error.message);
+        this.console_error('Error in waitNodeAndClickNode: ' + error.message);
     }
 
     return bSuccess;
+}
+
+/**
+ * 找父结点
+ * @param {*} node 节点
+ * @param {*} number 第几个
+ */
+cUtils.prototype.getParentNode = function (node, number) {
+    this.obj = node.findOne();
+    this.console_log(node);
+    for (let i = 0; i < number; i++) {
+        if (this.obj != null) {
+            this.obj = this.obj.parent();
+        }
+    }
+    this.console_log(this.obj);
+    return this.obj;
 }
 
 
 cUtils.prototype.getNode = function (waitText, waitID, waitClass, waitDesc) {
     let ele = undefined;
 
-    if (waitID != "") {
-        ele = id(waitID);
+    this.console_log(`ele=${ele}`);
+    if (waitText != "") {
+        ele = textContains(waitText);
     }
 
-    if (waitDesc != "") {
-        if (ele == undefined) {
-            ele = desc(waitDesc);
+    this.console_log(`ele=${ele}`);
+    if (waitID != "") {
+        if (ele == undefined || ele.exists() == false) {
+            ele = id(waitID);
         }
         else {
-            ele = ele.desc(waitDesc);
+            ele = ele.id(waitID);
         }
     }
 
+    this.console_log(`ele=${ele}`);
     if (waitClass != "") {
-        if (ele == undefined) {
+        if (ele == undefined || ele.exists() == false) {
             ele = className(waitClass);
         }
         else {
@@ -256,14 +422,16 @@ cUtils.prototype.getNode = function (waitText, waitID, waitClass, waitDesc) {
         }
     }
 
-    if (waitText != "") {
-        if (ele == undefined) {
-            ele = textContains(waitText);
+    this.console_log(`ele=${ele}`);
+    if (waitDesc != "") {
+        if (ele == undefined || ele.exists() == false) {
+            ele = desc(waitDesc);
         }
         else {
-            ele = ele.textContains(waitDesc);
+            ele = ele.desc(waitDesc);
         }
     }
+
     return ele;
 }
 
@@ -271,7 +439,7 @@ cUtils.prototype.getNode = function (waitText, waitID, waitClass, waitDesc) {
  * 给出语音提示
  * @param {*} _text 
  */
-cUtils.prototype.tts_report = function (_text) {
+cUtils.prototype.ttsReport = function (_text) {
     importClass(java.io.File);
     importClass(android.speech.tts.TextToSpeech);
     let ttsStatus = false;
@@ -363,17 +531,7 @@ function set_runing_tip_position(x, y) {
     runing_tip.setPosition(x, y);
 }
 
-/**
- * 开始结束提示
- */
-function start_tip(this_app) {
-    warn('开始执行', this_app)
-    vibrate(100)
-}
-function end_tip(operation_app) {
-    warn(operation_app, '执行完成')
-    vibrate(300)
-}
+
 // 普通上滑解锁
 // /**
 //  * 解锁
@@ -715,7 +873,7 @@ function addKeyEvent() {
         events.on("key_down", function (keyCode, events) {
             if (keyCode == keys.volume_up) {
                 toast('运行结束');
-                console.info('运行结束');
+                this.console_info('运行结束');
                 exit();
             }
         });
@@ -1010,18 +1168,10 @@ function time2str(_time) {
     if (hours != 0) result += hours + 'h '
     if (minutes != 0) result += minutes + 'm '
     result += seconds + 's'
-    return result
+    return result;
 }
 
-function swipe_down() {
-    swipe(500, 500, 500, 1500, 500)
-    sleep(800)
-}
 
-function swipe_up() {
-    swipe(500, 1500, 500, 100, 500)
-    sleep(800)
-}
 
 /**
  * 提醒用户，接下来的操作需要注意（用户确认后，方可继续）
