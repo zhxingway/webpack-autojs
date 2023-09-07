@@ -1,6 +1,6 @@
 /**
 autojs的封装操作
-
+20230906 封装兼容分辨率的点击
 */
 
 function cUtils() {
@@ -130,6 +130,7 @@ cUtils.prototype.startApp = function (appName, isStop, useTTS) {
             if (isStop) {
                 this.stopApp(appName);
             }
+            sleep(800);
 
             launchApp(appName);
             sleep(10000);
@@ -173,19 +174,32 @@ cUtils.prototype.stopApp = function (appName) {
         node = this.getNode('结束运行', '', 'android.widget.TextView', '');
         if (node == undefined || node == null) { }
         else {
-            parentObj = this.getParentNode(node, 1);
+            parentObj = this.getParentObject(node, 1);
             if (parentObj == null) { }
             else {
                 parentObj.click();
                 this.console_log(`click:${parentObj}`);
 
                 bSuccess = this.waitNodeAndClickNode('强行停止', '确定', '', '', '');
-                if(bSuccess){
+                if (bSuccess) {
                     this.keys_back();
                 }
-
             }
         }
+
+        // node = this.getNode('强行停止', '', 'android.widget.TextView', '');
+        // if (node == undefined || node == null) { }
+        // else {
+        //     if (node.clickable()) {
+        //         node.findOne().click();
+        //         this.console_log(`click:${node}`);
+
+        //         bSuccess = this.waitNodeAndClickNode('强行停止', '强行停止', '', '', '');
+        //         if (bSuccess) {
+        //             this.keys_back();
+        //         }
+        //     }
+        // }
     }
     catch (error) {
         this.console_error('Error in stopApp: ' + error.message);
@@ -251,7 +265,7 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText, waitID,
                 continue;
             }
             if (ele.exists()) {
-                click(705, 1096);
+                this.click(705, 1096);
                 bSuccess = true;
                 break;
             }
@@ -273,6 +287,51 @@ cUtils.prototype.waitNodeAndClickPoint = function (actionName, waitText, waitID,
     return bSuccess;
 }
 
+/**
+ * 点击坐标
+ * @param {*} x {number} x
+ * @param {*} y {number} y
+ */
+cUtils.prototype.click = function (x, y) {
+    x1 = this.transX(x);
+    y1 = this.transY(y);
+    click(x1, y1);
+    console.log(`click:(${x1},${y1})`);
+}
+
+/**
+ * 设置标准分辨率，当标准为小米时，y偏移值为20
+ * @param {*} x {number} 小米1080 华为720
+ * @param {*} y {number} 小米2400 华为1560
+ * @param {*} xOffest {number} 0
+ * @param {*} yOffest {number} 20
+ */
+cUtils.prototype.setStandardXY = function (x, y, xOffest, yOffest) {
+    this.widthStandard = x;
+    this.heightStandard = y;
+    this.xOffest = xOffest;
+    this.yOffest = yOffest;
+    this.widthActual = device.width;
+    this.heightActual = device.height;
+    console.log(`当前分辨率：${this.widthActual}*${this.heightActual}`);
+}
+
+
+/**
+ * 转换x
+ * @param {*} x {number} x
+ */
+cUtils.prototype.transX = function (x) {
+    return x * this.widthActual / this.widthStandard;
+}
+
+/**
+ * 转换y
+ * @param {*} y {number} y
+ */
+cUtils.prototype.transY = function (y) {
+    return y * this.heightActual / this.heightStandard;
+}
 
 /**
  * 配置日志格式
@@ -381,7 +440,7 @@ cUtils.prototype.waitNodeAndClickNode = function (actionName, waitText, waitID, 
  * @param {*} node 节点
  * @param {*} number 第几个
  */
-cUtils.prototype.getParentNode = function (node, number) {
+cUtils.prototype.getParentObject = function (node, number) {
     this.obj = node.findOne();
     this.console_log(node);
     for (let i = 0; i < number; i++) {
@@ -399,36 +458,57 @@ cUtils.prototype.getNode = function (waitText, waitID, waitClass, waitDesc) {
 
     this.console_log(`ele=${ele}`);
     if (waitText != "") {
-        ele = textContains(waitText);
+        ele = text(waitText);
+        if (ele.exists() == false) {
+            return undefined;
+        }
     }
 
     this.console_log(`ele=${ele}`);
     if (waitID != "") {
-        if (ele == undefined || ele.exists() == false) {
+        if (ele == undefined) {
             ele = id(waitID);
+            if (ele.exists() == false) {
+                return undefined;
+            }
         }
         else {
             ele = ele.id(waitID);
+            if (ele.exists() == false) {
+                return undefined;
+            }
         }
     }
 
     this.console_log(`ele=${ele}`);
     if (waitClass != "") {
-        if (ele == undefined || ele.exists() == false) {
+        if (ele == undefined) {
             ele = className(waitClass);
+            if (ele.exists() == false) {
+                return undefined;
+            }
         }
         else {
             ele = ele.className(waitClass);
+            if (ele.exists() == false) {
+                return undefined;
+            }
         }
     }
 
     this.console_log(`ele=${ele}`);
     if (waitDesc != "") {
-        if (ele == undefined || ele.exists() == false) {
+        if (ele == undefined) {
             ele = desc(waitDesc);
+            if (ele.exists() == false) {
+                return undefined;
+            }
         }
         else {
             ele = ele.desc(waitDesc);
+            if (ele.exists() == false) {
+                return undefined;
+            }
         }
     }
 
